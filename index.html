@@ -4,10 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🔮 리더스데이 진실게임</title>
-  <!-- 나눔고딕 폰트 로드 -->
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
   <style>
-    /* 기본 세팅 */
     html, body {
       margin: 0; padding: 0;
       font-family: 'Nanum Gothic', sans-serif;
@@ -20,18 +18,15 @@
     }
     * { box-sizing: border-box; }
 
-    /* 상단 스트립 */
     .top-bar {
       width: 100%; height: 6px; background: var(--brand);
     }
 
-    /* 컨테이너 */
     .container {
       max-width: 720px; margin: 0 auto;
-      padding: 1.5rem 1rem 4rem; /* 하단 버튼 공간 확보 */
+      padding: 1.5rem 1rem 4rem;
     }
 
-    /* 헤더 */
     .header {
       display: flex; justify-content: space-between;
       align-items: baseline; flex-wrap: wrap;
@@ -39,24 +34,27 @@
     }
     .header h1 {
       flex: 1 1 100%; text-align: center;
-      font-size: clamp(1.2rem, 5vw, 1.5rem);
+      font-size: clamp(1.2rem,5vw,1.5rem);
       margin-bottom: .5rem;
     }
     .header .meta {
       flex: 1 1 100%; text-align: center;
-      font-size: clamp(.8rem, 3.5vw, .9rem);
+      font-size: clamp(.8rem,3.5vw,.9rem);
       color: #666;
     }
 
-    /* 카드 그리드 */
+    /* 그리드에 최소 높이 주고 overflow visible */
     .grid {
-      position: relative; width: 100%; height: auto;
+      position: relative;
+      width: 100%;
+      min-height: clamp(180px,30vh,260px);
       padding: 2rem 0;
+      overflow: visible;
     }
     .card {
       position: absolute; top: 50%; left: 50%;
-      width: clamp(60px, 16vw, 100px);
-      height: clamp(84px, 22vw, 140px);
+      width: clamp(60px,16vw,100px);
+      height: clamp(84px,22vw,140px);
       transform-origin: bottom center;
       cursor: pointer; perspective: 800px;
       transition: transform .6s ease;
@@ -86,13 +84,11 @@
       background: #fff;
       transform: rotateY(180deg);
     }
-    /* 플립 시 카드 앞면 텍스트 숨김 */
     .card.flipped .card-front {
       visibility: hidden;
     }
     .card.used { pointer-events: none; }
 
-    /* 질문 팝업 */
     .overlay {
       display: none;
       position: fixed; top: 0; left: 0;
@@ -109,7 +105,6 @@
       white-space: pre-line;
     }
 
-    /* 카드 섞기 버튼: 하단 고정 */
     #shuffleBtn {
       position: fixed; bottom: 16px; left: 50%;
       transform: translateX(-50%);
@@ -119,16 +114,11 @@
       cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       z-index: 1001; display: none;
     }
-    #shuffleBtn:hover {
-      background: #d94300;
-    }
+    #shuffleBtn:hover { background: #d94300; }
 
-    /* 터치 여유 공간 */
-    @media (max-width: 400px) {
+    @media (max-width:400px) {
       .card { margin: 0 4px; }
-      #shuffleBtn {
-        width: 90%; padding: .6rem 1rem;
-      }
+      #shuffleBtn { width: 90%; padding: .6rem 1rem; }
     }
   </style>
 </head>
@@ -137,11 +127,8 @@
   <div class="container">
     <header class="header">
       <h1>🔮 리더스데이 진실게임</h1>
-      <div class="meta">
-        OK금융그룹<br>리더스데이
-      </div>
+      <div class="meta">OK금융그룹<br>리더스데이</div>
     </header>
-
     <div class="grid" id="cardGrid"></div>
   </div>
 
@@ -152,7 +139,6 @@
   </div>
 
   <script>
-    // 21가지 질문 리스트
     const questions = [
       "1. 리더 되고 나서 생긴 가장 예상 못한 변화는 뭐였나요?",
       "2. 요즘 출근길에 가장 많이 하는 생각은?",
@@ -178,15 +164,77 @@
     ];
     let remaining = [...questions];
 
-    const grid       = document.getElementById('cardGrid'),
-          overlay    = document.getElementById('overlay'),
-          questionBox= document.getElementById('questionBox'),
-          shuffleBtn = document.getElementById('shuffleBtn'),
-          count      = 7,
-          center     = (count - 1) / 2;
+    const grid        = document.getElementById('cardGrid');
+    const overlay     = document.getElementById('overlay');
+    const questionBox = document.getElementById('questionBox');
+    const shuffleBtn  = document.getElementById('shuffleBtn');
+    const count       = 7;
+    const center      = (count - 1) / 2;
 
-    // 카드 클릭(뽑기) 함수
     function draw(card) {
       if (card.classList.contains('used')) return;
       const idx = Math.floor(Math.random() * remaining.length);
-      const q   = r
+      const q   = remaining.splice(idx, 1)[0];
+      card.querySelector('.card-inner').classList.add('flipped', 'used');
+      showOverlay(q);
+      shuffleBtn.style.display = remaining.length ? 'block' : 'none';
+      if (!remaining.length) {
+        setTimeout(() => showOverlay("🎉 질문이 모두 소진되었습니다!"), 500);
+      }
+    }
+
+    function shuffleCards() {
+      const cards = Array.from(document.querySelectorAll('.card'));
+      const w     = window.innerWidth;
+      const gap   = Math.max(20, Math.min(50, w * 0.1));
+      cards.forEach((c, i) => {
+        c.classList.remove('flipped', 'used');
+        const ang = (i - center) * 12;
+        const x   = (i - center) * gap;
+        const y   = Math.abs(i - center) * 6;
+        c.style.zIndex    = i;
+        c.style.transform = `translateX(-50%) translateX(${x}px) rotate(${ang}deg) translateY(${y}px)`;
+      });
+      hideOverlay();
+      shuffleBtn.style.display = 'none';
+    }
+
+    function showOverlay(text) {
+      questionBox.textContent = text;
+      overlay.style.display   = 'flex';
+    }
+    function hideOverlay() {
+      overlay.style.display = 'none';
+    }
+
+    // 초기 카드 렌더링
+    for (let i = 0; i < count; i++) {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const w   = window.innerWidth;
+      const gap = Math.max(20, Math.min(50, w * 0.1));
+      const ang = (i - center) * 12;
+      const x   = (i - center) * gap;
+      const y   = Math.abs(i - center) * 6;
+
+      card.style.zIndex    = i;
+      card.style.transform = `translateX(-50%) translateX(${x}px) rotate(${ang}deg) translateY(${y}px)`;
+
+      const inner = document.createElement('div');
+      inner.className = 'card-inner';
+
+      const back  = document.createElement('div');
+      back.className  = 'card-back';
+      const front = document.createElement('div');
+      front.className = 'card-front';
+
+      inner.append(back, front);
+      card.append(inner);
+
+      card.addEventListener('click', () => draw(card));
+      grid.append(card);
+    }
+  </script>
+</body>
+</html>
