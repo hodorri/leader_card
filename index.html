@@ -7,19 +7,43 @@
   <!-- 나눔고딕 폰트 로드 -->
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
   <style>
-    /* 기존 스타일 생략… */
+    /* 모든 텍스트를 나눔고딕으로 통일 */
+    html, body {
+      font-family: 'Nanum Gothic', sans-serif;
+      margin: 0; padding: 0;
+      background: #faf9f6;
+      color: #333;
+    }
+    :root {
+      --brand: #f55000;
+      --accent-light: #fff1e6;
+    }
+    * { box-sizing: border-box; }
 
+    /* 상단 스트립 */
+    .top-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--brand);
+    }
+
+    /* 컨테이너 */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    /* 헤더 */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       margin-bottom: 2rem;
-      flex-wrap: nowrap; /* 기본은 한 줄 */
     }
     .header h1 {
       font-size: 1.5rem;
       font-weight: 700;
-      white-space: nowrap; /* 줄바꿈 방지 */
     }
     .header .meta {
       font-size: 0.9rem;
@@ -28,26 +52,103 @@
       line-height: 1.2;
     }
 
-    /* 스마트폰 화면용 미디어 쿼리 */
-    @media (max-width: 480px) {
-      .header {
-        flex-wrap: wrap;      /* 줄바꿈 허용 */
-      }
-      .header h1 {
-        font-size: 1.1rem;    /* 타이틀 작게 */
-        white-space: normal;  /* 줄바꿈 허용 */
-        text-align: center;   /* 중앙 정렬 */
-        flex: 1 1 100%;       /* 전체 폭 차지 */
-        margin-bottom: 0.3rem;
-      }
-      .header .meta {
-        font-size: 0.8rem;
-        text-align: center;
-        flex: 1 1 100%;       /* 전체 폭 차지 */
-      }
+    /* 카드 그리드 */
+    .grid {
+      position: relative;
+      width: 100%;
+      height: 260px;
+      margin-bottom: 2rem;
+    }
+    .card {
+      width: 100px;
+      height: 140px;
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform-origin: bottom center;
+      cursor: pointer;
+      perspective: 800px;
+      transition: transform 0.6s ease;
+    }
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+    }
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0.8rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    .card-back {
+      background: var(--accent-light);
+      border: 2px solid var(--brand);
+    }
+    .card-front {
+      background: #fff;
+      transform: rotateY(180deg);
+    }
+    .card.used {
+      pointer-events: none;
+      opacity: 0.6;
     }
 
-    /* 나머지 스타일… */
+    /* 섞기 버튼 */
+    #shuffleBtn {
+      display: none;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+    #shuffleBtn:hover {
+      background: #d94300;
+    }
+
+    /* 질문 팝업 */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .question-box {
+      background: #fff;
+      padding: 1.8rem 2rem;
+      border-radius: 12px;
+      max-width: 80%;
+      font-size: 1.2rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      text-align: center;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
   </style>
 </head>
 <body>
@@ -60,7 +161,103 @@
         리더스데이
       </div>
     </header>
-    <!-- 이하 생략… -->
+
+    <div class="grid" id="cardGrid"></div>
+    <button id="shuffleBtn" onclick="shuffleCards()">🔁 카드 섞기</button>
   </div>
+
+  <div id="overlay" class="overlay" onclick="hideOverlay()">
+    <div class="question-box" id="questionBox"></div>
+  </div>
+
+  <script>
+    const questions = [
+      "1. 리더 되고 나서 생긴 가장 예상 못한 변화는 뭐였나요?",
+      "2. 요즘 출근길에 가장 많이 하는 생각은?",
+      "3. ‘리더 되기 전’의 나에게 한 마디 해준다면?",
+      "4. 처음 팀원에게 리더로 불렸을 때 어땠어요?",
+      "5. 내 자리에서 가장 자주 하는 말 or 멘트는?",
+      "6. 최근 리더로서 가장 애매했던 순간은?",
+      "7. 팀원과 대화하다가 말문 막혔던 경험이 있다면?",
+      "8. “이건 왜 내 몫이지?” 싶은 순간, 있었나요?",
+      "9. 나만의 ‘멘탈 회복 루틴’이 있다면?",
+      "10. 리더 되고 나서 제일 어려웠던 선택은?",
+      "11. 나에게 리더란, 한 단어로 표현하면?",
+      "12. 리더로서 혼자 버티는 느낌을 가지고 있는 순간은?",
+      "13. 지금도 마음에 남아있는 팀원의 한 마디는?",
+      "14. 리더 생활 중, 가장 외로웠던 순간은?",
+      "15. 팀원과의 관계에서 내가 가장 신경 쓰는 부분은?",
+      "16. 앞으로 더 잘하고 싶은 리더의 모습은?",
+      "17. 1년 후, 지금보다 더 나아졌으면 하는 점은?",
+      "18. 내 팀을 하나의 단어로 표현한다면?",
+      "19. 앞으로 팀원들에게 받고 싶은 피드백은?",
+      "20. ‘내 리더십은 아직 OOO 중이다’ – OOO에 들어갈 말은?",
+      "21. 다시 팀원으로 돌아간다면 어떤 리더 밑에서 일하고 싶나요?"
+    ];
+    let remaining = [...questions];
+
+    function draw(card, front) {
+      if (card.classList.contains('used')) return;
+      const idx = Math.floor(Math.random() * remaining.length);
+      const q = remaining.splice(idx, 1)[0];
+      front.textContent = q;
+      card.classList.add('flipped', 'used');
+      showOverlay(q);
+      document.getElementById('shuffleBtn').style.display = remaining.length ? 'block' : 'none';
+      if (!remaining.length) {
+        setTimeout(() => showOverlay("🎉 질문이 모두 소진되었습니다!"), 500);
+      }
+    }
+
+    function shuffleCards() {
+      const cards = Array.from(document.querySelectorAll('.card'));
+      const center = (cards.length - 1) / 2;
+      cards.forEach((c, i) => {
+        c.classList.remove('used', 'flipped');
+        const angle = (i - center) * 12;
+        const x = (i - center) * 50;
+        const y = Math.abs(i - center) * 6;
+        c.style.zIndex = i;
+        c.style.transform = translateX(${x}px) rotate(${angle}deg) translateY(${y}px);
+      });
+      hideOverlay();
+      document.getElementById('shuffleBtn').style.display = 'none';
+    }
+
+    function showOverlay(text) {
+      document.getElementById('questionBox').textContent = text;
+      document.getElementById('overlay').style.display = 'flex';
+    }
+    function hideOverlay() {
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    // 초기 카드 배치
+    const grid = document.getElementById('cardGrid'),
+          count = 7,
+          center = (count - 1) / 2;
+
+    for (let i = 0; i < count; i++) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const angle = (i - center) * 12;
+      const x = (i - center) * 50;
+      const y = Math.abs(i - center) * 6;
+      card.style.transform = translateX(${x}px) rotate(${angle}deg) translateY(${y}px);
+      card.style.zIndex = i;
+
+      const inner = document.createElement('div');
+      inner.className = 'card-inner';
+      const back = document.createElement('div');
+      back.className = 'card-back';
+      const front = document.createElement('div');
+      front.className = 'card-front';
+
+      inner.append(back, front);
+      card.append(inner);
+      card.onclick = () => draw(card, front);
+      grid.append(card);
+    }
+  </script>
 </body>
 </html>
