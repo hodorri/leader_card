@@ -1,73 +1,85 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>리더십 카드 질문 비밀사</title>
   <!-- 나눔고딕 폰트 로드 -->
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
   <style>
-    /* 기본 리셋 & 폰트 */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { font-family: 'Nanum Gothic', sans-serif; background: #faf9f6; color: #333; }
-
+    /* 기본 세팅 */
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Nanum Gothic', sans-serif;
+      background: #faf9f6;
+      color: #333;
+      height: 100vh;
+      overflow-x: hidden;
+    }
     :root {
       --brand: #f55000;
       --accent-light: #fff1e6;
     }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
 
     /* 상단 스트립 */
     .top-bar {
-      width: 100%; height: 6px;
+      width: 100%;
+      height: 6px;
       background: var(--brand);
     }
-
     /* 컨테이너 */
     .container {
       max-width: 720px;
       margin: 0 auto;
-      padding: 1.5rem;
+      padding: 1.5rem 1rem 4rem; /* 하단 버튼 공간 확보 */
     }
-
     /* 헤더 */
     .header {
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      justify-content: center;
       align-items: baseline;
-      margin-bottom: 2rem;
-      flex-wrap: nowrap; /* 기본엔 한 줄 */
+      margin-bottom: 1rem;
     }
     .header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      white-space: nowrap;
+      flex: 1 1 100%;
+      text-align: center;
+      font-size: clamp(1.2rem, 5vw, 1.5rem);
+      margin-bottom: 0.5rem;
     }
     .header .meta {
-      font-size: 0.9rem;
+      flex: 1 1 100%;
+      text-align: center;
+      font-size: clamp(0.8rem, 3.5vw, 0.9rem);
       color: #666;
-      text-align: right;
-      line-height: 1.2;
     }
 
     /* 카드 그리드 */
     .grid {
       position: relative;
       width: 100%;
-      height: 260px;
-      margin-bottom: 2rem;
+      height: auto;
+      padding: 2rem 0;
     }
     .card {
+      /* 반응형 카드 크기 */
+      width: clamp(60px, 16vw, 100px);
+      height: clamp(84px, 22vw, 140px);
       position: absolute;
-      top: 40px; left: 50%;
+      top: 50%;
+      left: 50%;
       transform-origin: bottom center;
       cursor: pointer;
       perspective: 800px;
       transition: transform 0.6s ease;
-      width: 100px;
-      height: 140px;
     }
     .card-inner {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       position: relative;
       transform-style: preserve-3d;
       transition: transform 0.6s ease;
@@ -76,8 +88,9 @@
       transform: rotateY(180deg);
     }
     .card-front, .card-back {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%;
+      position: absolute;
+      width: 100%;
+      height: 100%;
       backface-visibility: hidden;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -98,80 +111,65 @@
       background: #fff;
       transform: rotateY(180deg);
     }
+    /* 플립 시 카드 자체의 질문 텍스트 숨기기 */
+    .card.flipped .card-front {
+      visibility: hidden;
+    }
     .card.used {
       pointer-events: none;
-      opacity: 0.6;
     }
 
-    /* 카드 섞기 버튼 */
+    /* 섞기 버튼: 하단 고정 */
     #shuffleBtn {
-      display: none;
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
       background: var(--brand);
       color: #fff;
       border: none;
-      padding: 0.7rem 1.2rem;
+      padding: 0.8rem 1.2rem;
       border-radius: 6px;
       font-size: 1rem;
       cursor: pointer;
-      margin: 0 auto 2rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 1001;
+      display: none;
       transition: background 0.2s;
     }
     #shuffleBtn:hover {
       background: #d94300;
     }
 
-    /* 질문 팝업 오버레이 */
+    /* 질문 팝업 */
     .overlay {
       display: none;
-      position: fixed; top: 0; left: 0;
+      position: fixed;
+      top: 0; left: 0;
       width: 100vw; height: 100vh;
       background: rgba(0,0,0,0.5);
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       z-index: 1000;
     }
     .question-box {
       background: #fff;
       padding: 1.8rem 2rem;
       border-radius: 12px;
-      max-width: 90%;
-      font-size: 1.2rem;
+      max-width: 80%;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
       text-align: center;
       line-height: 1.4;
       white-space: pre-line;
     }
 
-    /* 모바일용 미디어 쿼리 */
-    @media (max-width: 480px) {
-      .header {
-        flex-wrap: wrap; /* 줄바꿈 허용 */
-      }
-      .header h1 {
-        font-size: 1.1rem;      /* 작게 축소 */
-        white-space: normal;    /* 줄바꿈 허용 */
-        text-align: center;
-        flex: 1 1 100%;
-        margin-bottom: 0.3rem;
-      }
-      .header .meta {
-        font-size: 0.8rem;
-        text-align: center;
-        flex: 1 1 100%;
-        margin-bottom: 1rem;
-      }
-      .card {
-        width: clamp(60px, 16vw, 100px);
-        height: clamp(84px, 22vw, 140px);
-      }
+    /* 터치 편의를 위한 작은 화면용 조정 */
+    @media (max-width: 400px) {
+      .card { margin: 0 4px; }
       #shuffleBtn {
-        font-size: 0.9rem;
-        padding: 0.6rem 1rem;
         width: 90%;
-      }
-      .grid {
-        height: auto;
-        padding: 2rem 0;
+        padding: 0.6rem 1rem;
       }
     }
   </style>
@@ -180,16 +178,14 @@
   <div class="top-bar"></div>
   <div class="container">
     <header class="header">
-      <h1>🔮리더스데이 리더 진실게임</h1>
-      <div class="meta">
-        OK금융그룹<br>
-        리더스데이
-      </div>
+      <h1>🔮 리더십 카드 질문 비밀사</h1>
+      <div class="meta">OK금융그룹<br>리더스데이</div>
     </header>
 
     <div class="grid" id="cardGrid"></div>
-    <button id="shuffleBtn" onclick="shuffleCards()">🔁 카드 섞기</button>
   </div>
+
+  <button id="shuffleBtn" onclick="shuffleCards()">🔁 카드 섞기</button>
 
   <div id="overlay" class="overlay" onclick="hideOverlay()">
     <div class="question-box" id="questionBox"></div>
@@ -225,8 +221,8 @@
       if (card.classList.contains('used')) return;
       const idx = Math.floor(Math.random() * remaining.length);
       const q = remaining.splice(idx, 1)[0];
-      front.textContent = q;
-      card.classList.add('flipped', 'used');
+      // 카드 자체에는 질문 텍스트를 표시하지 않음
+      card.querySelector('.card-inner').classList.add('flipped', 'used');
       showOverlay(q);
       document.getElementById('shuffleBtn').style.display = remaining.length ? 'block' : 'none';
       if (!remaining.length) {
@@ -238,7 +234,7 @@
       const cards = Array.from(document.querySelectorAll('.card'));
       const center = (cards.length - 1) / 2;
       cards.forEach((c, i) => {
-        c.classList.remove('used', 'flipped');
+        c.classList.remove('flipped', 'used');
         const angle = (i - center) * 12;
         const x = (i - center) * 50;
         const y = Math.abs(i - center) * 6;
@@ -257,26 +253,25 @@
       document.getElementById('overlay').style.display = 'none';
     }
 
-    // 초기 카드 배치
+    // 카드 초기 배치
     const grid = document.getElementById('cardGrid'),
-          cnt = 7,
-          mid = (cnt - 1) / 2;
-    for (let i = 0; i < cnt; i++) {
+          count = 7,
+          center = (count - 1) / 2;
+    for (let i = 0; i < count; i++) {
       const card = document.createElement('div');
       card.className = 'card';
-      const angle = (i - mid) * 12;
-      const x = (i - mid) * 50;
-      const y = Math.abs(i - mid) * 6;
-      card.style.transform = `translateX(${x}px) rotate(${angle}deg) translateY(${y}px)`;
+      const angle = (i - center) * 12;
+      const x    = (i - center) * 50;
+      const y    = Math.abs(i - center) * 6;
       card.style.zIndex = i;
+      card.style.transform = `translateX(${x}px) rotate(${angle}deg) translateY(${y}px)`;
 
       const inner = document.createElement('div');
       inner.className = 'card-inner';
-      const back = document.createElement('div');
+      const back  = document.createElement('div');
       back.className = 'card-back';
       const front = document.createElement('div');
       front.className = 'card-front';
-
       inner.append(back, front);
       card.append(inner);
       card.onclick = () => draw(card, front);
