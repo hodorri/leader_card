@@ -3,27 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🔮리더스데이 리더 진실게임</title>
+  <title>리더십 카드 질문 비밀사</title>
   <!-- 나눔고딕 폰트 로드 -->
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
   <style>
-    /* 모든 텍스트를 나눔고딕으로 통일 */
-    html, body {
-      font-family: 'Nanum Gothic', sans-serif;
-      margin: 0; padding: 0;
-      background: #faf9f6;
-      color: #333;
-    }
+    /* 기본 리셋 & 폰트 */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { font-family: 'Nanum Gothic', sans-serif; background: #faf9f6; color: #333; }
+
     :root {
       --brand: #f55000;
       --accent-light: #fff1e6;
     }
-    * { box-sizing: border-box; }
 
     /* 상단 스트립 */
     .top-bar {
-      width: 100%;
-      height: 6px;
+      width: 100%; height: 6px;
       background: var(--brand);
     }
 
@@ -40,10 +35,12 @@
       justify-content: space-between;
       align-items: baseline;
       margin-bottom: 2rem;
+      flex-wrap: nowrap; /* 기본엔 한 줄 */
     }
     .header h1 {
       font-size: 1.5rem;
       font-weight: 700;
+      white-space: nowrap;
     }
     .header .meta {
       font-size: 0.9rem;
@@ -60,19 +57,17 @@
       margin-bottom: 2rem;
     }
     .card {
-      width: 100px;
-      height: 140px;
       position: absolute;
-      top: 40px;
-      left: 50%;
+      top: 40px; left: 50%;
       transform-origin: bottom center;
       cursor: pointer;
       perspective: 800px;
       transition: transform 0.6s ease;
+      width: 100px;
+      height: 140px;
     }
     .card-inner {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       position: relative;
       transform-style: preserve-3d;
       transition: transform 0.6s ease;
@@ -81,9 +76,8 @@
       transform: rotateY(180deg);
     }
     .card-front, .card-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
       backface-visibility: hidden;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
@@ -109,7 +103,7 @@
       opacity: 0.6;
     }
 
-    /* 섞기 버튼 */
+    /* 카드 섞기 버튼 */
     #shuffleBtn {
       display: none;
       background: var(--brand);
@@ -119,7 +113,7 @@
       border-radius: 6px;
       font-size: 1rem;
       cursor: pointer;
-      margin-bottom: 2rem;
+      margin: 0 auto 2rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       transition: background 0.2s;
     }
@@ -127,27 +121,58 @@
       background: #d94300;
     }
 
-    /* 질문 팝업 */
+    /* 질문 팝업 오버레이 */
     .overlay {
       display: none;
-      position: fixed;
-      top: 0; left: 0;
+      position: fixed; top: 0; left: 0;
       width: 100vw; height: 100vh;
       background: rgba(0,0,0,0.5);
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       z-index: 1000;
     }
     .question-box {
       background: #fff;
       padding: 1.8rem 2rem;
       border-radius: 12px;
-      max-width: 80%;
+      max-width: 90%;
       font-size: 1.2rem;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
       text-align: center;
       line-height: 1.4;
       white-space: pre-line;
+    }
+
+    /* 모바일용 미디어 쿼리 */
+    @media (max-width: 480px) {
+      .header {
+        flex-wrap: wrap; /* 줄바꿈 허용 */
+      }
+      .header h1 {
+        font-size: 1.1rem;      /* 작게 축소 */
+        white-space: normal;    /* 줄바꿈 허용 */
+        text-align: center;
+        flex: 1 1 100%;
+        margin-bottom: 0.3rem;
+      }
+      .header .meta {
+        font-size: 0.8rem;
+        text-align: center;
+        flex: 1 1 100%;
+        margin-bottom: 1rem;
+      }
+      .card {
+        width: clamp(60px, 16vw, 100px);
+        height: clamp(84px, 22vw, 140px);
+      }
+      #shuffleBtn {
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+        width: 90%;
+      }
+      .grid {
+        height: auto;
+        padding: 2rem 0;
+      }
     }
   </style>
 </head>
@@ -218,7 +243,7 @@
         const x = (i - center) * 50;
         const y = Math.abs(i - center) * 6;
         c.style.zIndex = i;
-        c.style.transform = translateX(${x}px) rotate(${angle}deg) translateY(${y}px);
+        c.style.transform = `translateX(${x}px) rotate(${angle}deg) translateY(${y}px)`;
       });
       hideOverlay();
       document.getElementById('shuffleBtn').style.display = 'none';
@@ -234,16 +259,15 @@
 
     // 초기 카드 배치
     const grid = document.getElementById('cardGrid'),
-          count = 7,
-          center = (count - 1) / 2;
-
-    for (let i = 0; i < count; i++) {
+          cnt = 7,
+          mid = (cnt - 1) / 2;
+    for (let i = 0; i < cnt; i++) {
       const card = document.createElement('div');
       card.className = 'card';
-      const angle = (i - center) * 12;
-      const x = (i - center) * 50;
-      const y = Math.abs(i - center) * 6;
-      card.style.transform = translateX(${x}px) rotate(${angle}deg) translateY(${y}px);
+      const angle = (i - mid) * 12;
+      const x = (i - mid) * 50;
+      const y = Math.abs(i - mid) * 6;
+      card.style.transform = `translateX(${x}px) rotate(${angle}deg) translateY(${y}px)`;
       card.style.zIndex = i;
 
       const inner = document.createElement('div');
