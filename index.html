@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>리더십 카드 질문 비밀사</title>
+  <title>🔮리더스데이 진실게임</title>
   <!-- 나눔고딕 폰트 로드 -->
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
   <style>
@@ -31,12 +31,14 @@
       height: 6px;
       background: var(--brand);
     }
+
     /* 컨테이너 */
     .container {
       max-width: 720px;
       margin: 0 auto;
       padding: 1.5rem 1rem 4rem; /* 하단 버튼 공간 확보 */
     }
+
     /* 헤더 */
     .header {
       display: flex;
@@ -66,7 +68,6 @@
       padding: 2rem 0;
     }
     .card {
-      /* 반응형 카드 크기 */
       width: clamp(60px, 16vw, 100px);
       height: clamp(84px, 22vw, 140px);
       position: absolute;
@@ -111,7 +112,7 @@
       background: #fff;
       transform: rotateY(180deg);
     }
-    /* 플립 시 카드 자체의 질문 텍스트 숨기기 */
+    /* 플립 시 카드 자체 텍스트 숨김 */
     .card.flipped .card-front {
       visibility: hidden;
     }
@@ -160,11 +161,15 @@
       max-width: 80%;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
       text-align: center;
-      line-height: 1.4;
-      white-space: pre-line;
+      /* 줄바꿈 깨지지 않도록 조정 */
+      white-space: normal;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      font-size: clamp(1rem, 4vw, 1.3rem);
+      line-height: 1.5;
     }
 
-    /* 터치 편의를 위한 작은 화면용 조정 */
+    /* 작은 화면용 조정 */
     @media (max-width: 400px) {
       .card { margin: 0 4px; }
       #shuffleBtn {
@@ -178,7 +183,7 @@
   <div class="top-bar"></div>
   <div class="container">
     <header class="header">
-      <h1>🔮 리더십 카드 질문 비밀사</h1>
+      <h1>🔮리더스데이 진실게임</h1>
       <div class="meta">OK금융그룹<br>리더스데이</div>
     </header>
 
@@ -217,11 +222,10 @@
     ];
     let remaining = [...questions];
 
-    function draw(card, front) {
+    function draw(card) {
       if (card.classList.contains('used')) return;
       const idx = Math.floor(Math.random() * remaining.length);
       const q = remaining.splice(idx, 1)[0];
-      // 카드 자체에는 질문 텍스트를 표시하지 않음
       card.querySelector('.card-inner').classList.add('flipped', 'used');
       showOverlay(q);
       document.getElementById('shuffleBtn').style.display = remaining.length ? 'block' : 'none';
@@ -274,7 +278,7 @@
       front.className = 'card-front';
       inner.append(back, front);
       card.append(inner);
-      card.onclick = () => draw(card, front);
+      card.onclick = () => draw(card);
       grid.append(card);
     }
   </script>
